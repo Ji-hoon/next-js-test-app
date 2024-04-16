@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
+import { Controls } from "./Controls";
 
 // import { Inter } from "next/font/google";
 // const inter = Inter({ subsets: ["latin"] });
@@ -10,11 +11,23 @@ export const metadata: Metadata = {
   description: "Authored by jhkim",
 };
 
-export default function RootLayout({
+export type TopicResponse = {
+  id: number;
+  title: string;
+  content: string;
+};
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const response = await fetch("http://localhost:9999/topics", {
+    next: { revalidate: 1000 },
+    //cache: "no-store",
+  });
+  const result = await response.json();
+
   return (
     <html>
       <body>
@@ -22,25 +35,17 @@ export default function RootLayout({
           <Link href="/">Home</Link>
         </h1>
         <ol>
-          <li>
-            <Link href="/read/1">html</Link>
-          </li>
-          <li>
-            <Link href="/read/2">css</Link>
-          </li>
+          {result &&
+            result.map((topic: TopicResponse, index: number) => {
+              return (
+                <li key={index}>
+                  <Link href={`/read/${topic.id}`}>{topic.title}</Link>
+                </li>
+              );
+            })}
         </ol>
         {children}
-        <ul>
-          <li>
-            <Link href="/create">Create</Link>
-          </li>
-          <li>
-            <Link href="/update/1">Update</Link>
-          </li>
-          <li>
-            <input type="button" value="Delete" />
-          </li>
-        </ul>
+        <Controls />
       </body>
     </html>
   );
